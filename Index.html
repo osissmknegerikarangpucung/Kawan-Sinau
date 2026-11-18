@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kawan Sinau - Platform Belajar Bersama</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { color: #2563eb; font-weight: 700; }
+        .gradient-banner { background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 50%, #ec4899 100%); }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col pb-16">
+
+    <!-- LOADING SCREEN -->
+    <div id="loading-screen" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p class="mt-3 text-sm text-slate-500 font-medium">Memuat Kawan Sinau...</p>
+    </div>
+
+    <!-- 1. HALAMAN AUTENTIKASI -->
+    <div id="auth-container" class="hidden flex-grow flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl shadow-xl border border-slate-200 p-8">
+            <div class="text-center mb-6">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full overflow-hidden bg-blue-50 border border-blue-200 shadow-sm mb-3">
+                    <img src="https://lh3.googleusercontent.com/d/1auTnpx2x-lY0DYizjMErMUPmTcX3VZ9R=s400" alt="Logo Kawan Sinau" class="w-full h-full object-cover">
+                </div>
+                <h1 class="text-2xl font-bold text-slate-900" id="auth-title">Selamat Datang 👋</h1>
+                <p class="text-sm text-slate-500 mt-1" id="auth-subtitle">Masuk untuk mengakses ruang kelas Kawan Sinau</p>
+            </div>
+
+            <div id="auth-alert" class="hidden mb-4 p-3 rounded-lg text-sm"></div>
+
+            <form id="form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">👤</span>
+                        <input type="text" id="login-nama" required class="w-full pl-10 pr-3.5 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50" placeholder="Masukkan nama lengkap Anda">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-medium text-slate-600">Kata Sandi</label>
+                        <button type="button" onclick="switchAuthView('forgot')" class="text-xs font-medium text-blue-600 hover:underline">Lupa sandi?</button>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400">🔒</span>
+                        <input type="password" id="login-password" required class="w-full pl-10 pr-10 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm bg-slate-50" placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('login-password', this)" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-xs">👁️</button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3 rounded-xl text-sm transition shadow-lg shadow-slate-300">Masuk ke Sistem &rarr;</button>
+                
+                <div class="pt-4 border-t border-slate-100 flex flex-col gap-2 text-center">
+                    <button type="button" onclick="switchAuthView('register-siswa')" class="text-sm font-medium text-blue-600 hover:bg-blue-50 py-2 rounded-xl transition">Buat akun peserta baru</button>
+                    <button type="button" onclick="switchAuthView('register-pengajar')" class="text-xs font-medium text-slate-600 hover:bg-slate-100 py-2 rounded-xl transition">Daftar Akun Pemateri / Pengajar</button>
+                </div>
+            </form>
+
+            <form id="form-register-siswa" class="hidden space-y-3.5">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap</label>
+                    <input type="text" id="reg-siswa-nama" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Nama lengkap Anda">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kelas</label>
+                    <select id="reg-siswa-kelas" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50">
+                        <option value="">-- Pilih Kelas --</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Sekolah</label>
+                    <input type="text" id="reg-siswa-sekolah" value="SMKN Karangpucung" readonly class="w-full px-3.5 py-2.5 border border-slate-200 bg-slate-100 text-slate-600 rounded-xl text-sm font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Email Aktif (Pemulihan)</label>
+                    <input type="email" id="reg-siswa-email" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="contoh@gmail.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kata Sandi (Min. 6 Karakter)</label>
+                    <input type="password" id="reg-siswa-password" required minlength="6" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Buat sandi">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition mt-2">Daftar Sebagai Peserta</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="switchAuthView('login')" class="text-xs font-medium text-slate-500 hover:text-slate-800">Sudah punya akun? Login</button>
+                </div>
+            </form>
+
+            <form id="form-register-pengajar" class="hidden space-y-3.5">
+                <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl text-xs text-amber-800">
+                    Pendaftaran pengajar memerlukan persetujuan Admin Utama (<strong>Arofah Alhidayah</strong>).
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Lengkap & Gelar</label>
+                    <input type="text" id="reg-guru-nama" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Contoh: Budi Santoso">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Ahli di Bidang</label>
+                    <input type="text" id="reg-guru-bidang" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Contoh: Instalasi Listrik">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Deskripsi Pengalaman</label>
+                    <textarea id="reg-guru-kemampuan" rows="2" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Jelaskan singkat kemampuan..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Email Aktif</label>
+                    <input type="email" id="reg-guru-email" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="email@anda.com">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kata Sandi</label>
+                    <input type="password" id="reg-guru-password" required minlength="6" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Buat sandi">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl text-sm transition">Ajukan Akun Pengajar</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="switchAuthView('login')" class="text-xs font-medium text-slate-500 hover:text-slate-800">Kembali ke Login</button>
+                </div>
+            </form>
+
+            <form id="form-forgot" class="hidden space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Masukkan Email Terdaftar</label>
+                    <input type="email" id="forgot-email" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="nama@email.com">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition">Kirim Link Reset Sandi</button>
+                <div class="text-center pt-2">
+                    <button type="button" onclick="switchAuthView('login')" class="text-xs font-medium text-slate-500 hover:text-slate-800">Kembali ke Login</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PENDING PENGAJAR -->
+    <div id="pending-container" class="hidden flex-grow flex items-center justify-center p-4">
+        <div class="bg-white max-w-md w-full p-8 rounded-3xl shadow-xl border border-slate-200 text-center">
+            <div class="w-14 h-14 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto text-2xl mb-4">⏳</div>
+            <h2 class="text-xl font-bold text-slate-900">Menunggu Persetujuan Admin</h2>
+            <p class="text-sm text-slate-600 mt-2">Halo <strong id="pending-nama"></strong>, akun Pengajar Anda sedang ditinjau.</p>
+            <button onclick="logoutUser()" class="mt-6 bg-slate-100 hover:bg-slate-200 text-slate-700 px-5 py-2.5 rounded-xl text-sm font-medium transition">Keluar (Logout)</button>
+        </div>
+    </div>
+
+    <!-- 2. DASHBOARD UTAMA (SETELAH LOGIN) -->
+    <div id="app-container" class="hidden flex-grow flex flex-col">
+        
+        <!-- Navbar Atas -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+            <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full overflow-hidden bg-blue-50 border border-blue-200 flex-shrink-0 shadow-sm">
+                        <img src="https://lh3.googleusercontent.com/d/1auTnpx2x-lY0DYizjMErMUPmTcX3VZ9R=s400" alt="Logo" class="w-full h-full object-cover">
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-slate-900 text-sm leading-tight">Kawan Sinau</h1>
+                        <span id="user-role-badge" class="text-[10px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-600">Peserta</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div id="realtime-clock" class="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 shadow-sm">00:00:00 WIB</div>
+                    <button onclick="logoutUser()" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-semibold px-3 py-2 rounded-xl transition">Keluar</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- KONTEN PESERTA -->
+        <main id="view-peserta" class="hidden max-w-4xl mx-auto px-4 py-6 w-full flex-grow space-y-6">
+            
+            <!-- Banner Sambutan Khas -->
+            <div class="gradient-banner rounded-3xl p-6 text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight" id="banner-welcome-name">Selamat Datang! 🎓</h2>
+                    <p class="text-xs sm:text-sm text-blue-100 mt-2">Mari semangat belajar hari ini. Akses modul materi, tanya jawab, dan diskusi di bawah.</p>
+                </div>
+                <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+            </div>
+
+            <!-- Menu Utama Kotak Modern (Mirip Referensi Gambar 1) -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-200">
+                <h3 class="font-bold text-slate-900 text-sm mb-4 flex items-center gap-2">
+                    <span>🗂️</span> Menu Utama Kawan Sinau
+                </h3>
+                <div class="grid grid-cols-4 gap-3 sm:gap-4 text-center">
+                    <button onclick="switchTab('peserta', 'modul')" class="flex flex-col items-center p-3 rounded-2xl bg-blue-50 hover:bg-blue-100 transition group">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md mb-2 group-hover:scale-105 transition">📚</div>
+                        <span class="text-xs font-semibold text-slate-700">Materi</span>
+                    </button>
+                    <button onclick="switchTab('peserta', 'tanya')" class="flex flex-col items-center p-3 rounded-2xl bg-rose-50 hover:bg-rose-100 transition group">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-600 text-white flex items-center justify-center text-xl shadow-md mb-2 group-hover:scale-105 transition">💬</div>
+                        <span class="text-xs font-semibold text-slate-700">Tanya Jawab</span>
+                    </button>
+                    <button onclick="switchTab('peserta', 'forum')" class="flex flex-col items-center p-3 rounded-2xl bg-indigo-50 hover:bg-indigo-100 transition group">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md mb-2 group-hover:scale-105 transition">🌐</div>
+                        <span class="text-xs font-semibold text-slate-700">Forum</span>
+                    </button>
+                    <button onclick="switchTab('peserta', 'saran')" class="flex flex-col items-center p-3 rounded-2xl bg-amber-50 hover:bg-amber-100 transition group">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center text-xl shadow-md mb-2 group-hover:scale-105 transition">💡</div>
+                        <span class="text-xs font-semibold text-slate-700">Saran</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bagian Konten Dinamis Peserta -->
+            <div id="content-p-modul" class="space-y-4">
+                <div class="flex justify-between items-center px-1">
+                    <h3 class="font-bold text-slate-900 text-base">📚 Modul Pelajaran Saya</h3>
+                    <span id="total-modul-badge" class="text-xs bg-blue-100 text-blue-700 font-bold px-2.5 py-1 rounded-full">0 Modul</span>
+                </div>
+                <div id="list-modul-peserta" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <p class="text-sm text-slate-400">Memuat daftar modul...</p>
+                </div>
+            </div>
+
+            <!-- Tanya Jawab -->
+            <div id="content-p-tanya" class="hidden space-y-4">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-3 text-sm">Ajukan Pertanyaan ke Pengajar</h3>
+                    <form id="form-tanya-peserta" class="space-y-3">
+                        <textarea id="input-pertanyaan" rows="3" required class="w-full p-3.5 border border-slate-300 rounded-xl text-sm outline-none focus:border-blue-500 bg-slate-50" placeholder="Tulis pertanyaan Anda mengenai materi..."></textarea>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-md">Kirim Pertanyaan</button>
+                    </form>
+                </div>
+                <div id="list-tanya-peserta" class="space-y-3"></div>
+            </div>
+
+            <!-- Forum Diskusi -->
+            <div id="content-p-forum" class="hidden space-y-4">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-1 text-sm">🌐 Forum Diskusi Terbuka (Real Life)</h3>
+                    <p class="text-xs text-slate-500 mb-3">Diskusi interaktif bersama seluruh rekan siswa dan pengajar.</p>
+                    <form id="form-forum-chat" class="flex gap-2">
+                        <input type="text" id="input-forum-pesan" required class="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Ketik pesan diskusi...">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold">Kirim</button>
+                    </form>
+                </div>
+                <div id="list-forum-chat" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- Kotak Saran -->
+            <div id="content-p-saran" class="hidden max-w-xl mx-auto">
+                <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-1">Kirim Saran & Masukan</h3>
+                    <p class="text-xs text-slate-500 mb-4">Usulkan materi baru atau perbaikan platform.</p>
+                    <form id="form-saran-peserta" class="space-y-3">
+                        <textarea id="input-saran" rows="4" required class="w-full p-3.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Tulis saran Anda..."></textarea>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold">Kirim Saran</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- KONTEN PENGAJAR & ADMIN -->
+        <main id="view-pengajar" class="hidden max-w-4xl mx-auto px-4 py-6 w-full flex-grow space-y-6">
+            <div id="admin-approval-section" class="hidden bg-amber-50 border border-amber-200 rounded-3xl p-5 shadow-sm">
+                <h3 class="font-bold text-amber-900 text-sm flex items-center gap-2 mb-3">
+                    👑 Panel Admin Utama: Persetujuan Akun Pengajar
+                </h3>
+                <div id="list-pending-pengajar" class="space-y-2">
+                    <p class="text-xs text-amber-700">Tidak ada permintaan pengajar baru.</p>
+                </div>
+            </div>
+
+            <!-- Menu Tab Pengajar -->
+            <div class="flex border-b border-slate-200 mb-4 gap-6 overflow-x-auto pb-1">
+                <button onclick="switchTab('pengajar', 'buat')" id="tab-g-buat" class="pb-3 text-sm tab-active whitespace-nowrap font-semibold">✍️ Beri Materi</button>
+                <button onclick="switchTab('pengajar', 'modul')" id="tab-g-modul" class="pb-3 text-sm text-slate-500 whitespace-nowrap font-semibold">📚 Materi Terkirim</button>
+                <button onclick="switchTab('pengajar', 'siswa')" id="tab-g-siswa" class="pb-3 text-sm text-slate-500 whitespace-nowrap font-semibold">👥 Daftar Siswa & Reset</button>
+                <button onclick="switchTab('pengajar', 'tanya')" id="tab-g-tanya" class="pb-3 text-sm text-slate-500 whitespace-nowrap font-semibold">💬 Tanya Jawab</button>
+                <button onclick="switchTab('pengajar', 'forum')" id="tab-g-forum" class="pb-3 text-sm text-slate-500 whitespace-nowrap font-semibold">🌐 Forum</button>
+                <button onclick="switchTab('pengajar', 'saran')" id="tab-g-saran" class="pb-3 text-sm text-slate-500 whitespace-nowrap font-semibold">💡 Saran</button>
+            </div>
+
+            <!-- Form Buat Materi -->
+            <div id="content-g-buat" class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm max-w-2xl mx-auto">
+                <h3 class="font-bold text-slate-900 mb-4 text-base">Publikasikan Materi Baru</h3>
+                <form id="form-buat-materi" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Judul Materi</label>
+                        <input type="text" id="materi-judul" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Contoh: K3 Keselamatan Listrik & Budaya Kerja 5R">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Deskripsi Singkat</label>
+                        <input type="text" id="materi-deskripsi" required class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Ringkasan singkat modul...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Isi Materi Lengkap (Dukung Format Penjelasan & Poin)</label>
+                        <textarea id="materi-isi" rows="6" required class="w-full p-4 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Tuliskan materi pembelajaran secara lengkap..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Upload Gambar Pendukung / Sampul (Opsional)</label>
+                        <input type="file" id="materi-gambar" accept="image/*" class="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">Link Modul Eksternal / Drive / Video (Opsional)</label>
+                        <input type="url" id="materi-link" class="w-full px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="https://...">
+                    </div>
+                    <button type="submit" id="btn-submit-materi" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition shadow-md">Publikasikan Materi &rarr;</button>
+                </form>
+            </div>
+
+            <div id="content-g-modul" class="hidden space-y-4">
+                <div id="list-modul-pengajar" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div id="content-g-siswa" class="hidden bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                    <h3 class="font-bold text-slate-800 text-sm">Peserta Terdaftar, Status & Reset Sandi</h3>
+                    <span id="total-siswa-badge" class="text-xs bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full">0 Siswa</span>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-600 text-xs uppercase">
+                            <tr>
+                                <th class="px-4 py-3">Peserta</th>
+                                <th class="px-4 py-3">Kelas</th>
+                                <th class="px-4 py-3">Status</th>
+                                <th class="px-4 py-3">Aksi Reset Sandi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-siswa-body" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-g-tanya" class="hidden space-y-4">
+                <div id="list-tanya-pengajar" class="space-y-3"></div>
+            </div>
+
+            <div id="content-g-forum" class="hidden space-y-4">
+                <div class="bg-white p-5 rounded-3xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-1 text-sm">🌐 Forum Diskusi Terbuka (Real Life)</h3>
+                    <form id="form-forum-chat-guru" class="flex gap-2 mt-3">
+                        <input type="text" id="input-forum-pesan-guru" required class="flex-1 px-4 py-2.5 border border-slate-300 rounded-xl text-sm outline-none bg-slate-50" placeholder="Ketik pesan diskusi...">
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold">Kirim</button>
+                    </form>
+                </div>
+                <div id="list-forum-chat-guru" class="space-y-3 max-h-[500px] overflow-y-auto pr-1"></div>
+            </div>
+
+            <div id="content-g-saran" class="hidden space-y-3">
+                <div id="list-saran-pengajar" class="space-y-3"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 3. RUANG BACA MATERI FULL-SCREEN (PROFESIONAL ALA GAMBAR 2 & 3) -->
+    <div id="modal-baca" class="hidden fixed inset-0 bg-white z-50 flex flex-col overflow-y-auto">
+        <!-- Header Ruang Baca -->
+        <div class="bg-white border-b border-slate-200 sticky top-0 z-20 px-4 py-3 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <button onclick="tutupModalBaca()" class="bg-slate-100 hover:bg-slate-200 text-slate-800 px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    &larr; Kembali ke Kelas
+                </button>
+            </div>
+            <div class="text-right">
+                <h4 class="font-bold text-slate-900 text-xs sm:text-sm">Ruang Baca Materi</h4>
+                <p id="modal-pengajar-sub" class="text-[11px] text-slate-500">Pengampu: Pengajar Kawan Sinau</p>
+            </div>
+        </div>
+
+        <!-- Konten Full Layar -->
+        <div class="max-w-3xl mx-auto px-4 py-8 w-full flex-grow space-y-6">
+            <div class="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-4">
+                <h2 id="modal-judul" class="text-xl sm:text-2xl font-black text-slate-900 leading-tight">Judul Materi</h2>
+                <div class="flex items-center gap-2 text-xs text-slate-500 pb-4 border-b border-slate-100">
+                    <span>📅 Dipublikasikan secara resmi</span>
+                </div>
+                <img id="modal-gambar" src="" alt="Gambar Materi" class="hidden w-full rounded-2xl border object-contain max-h-96 bg-slate-50 shadow-sm">
+                <div id="modal-isi" class="text-sm sm:text-base text-slate-700 leading-relaxed whitespace-pre-line pt-2"></div>
+                <div id="modal-link-box" class="hidden pt-4 border-t border-slate-100">
+                    <a id="modal-link" href="#" target="_blank" class="inline-flex items-center gap-2 bg-blue-50 text-blue-700 hover:bg-blue-100 px-5 py-3 rounded-xl text-sm font-semibold transition">
+                        🔗 Buka Lampiran Eksternal / Video &rarr;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVBAR (Hanya Muncul Setelah Login - Referensi Gambar 1) -->
+    <nav id="bottom-navbar" class="hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 py-2.5 px-6 shadow-lg">
+        <div class="max-w-md mx-auto flex justify-around items-center text-slate-500 text-xs font-semibold">
+            <button onclick="switchTab('peserta', 'modul')" class="flex flex-col items-center gap-1 hover:text-blue-600 transition tab-active" id="nav-btn-beranda">
+                <span class="text-lg">🏠</span> Beranda
+            </button>
+            <button onclick="switchTab('peserta', 'tanya')" class="flex flex-col items-center gap-1 hover:text-blue-600 transition" id="nav-btn-tanya">
+                <span class="text-lg">💬</span> Tanya
+            </button>
+            <button onclick="switchTab('peserta', 'forum')" class="flex flex-col items-center gap-1 hover:text-blue-600 transition" id="nav-btn-forum">
+                <span class="text-lg">🌐</span> Forum
+            </button>
+            <button onclick="switchTab('peserta', 'saran')" class="flex flex-col items-center gap-1 hover:text-blue-600 transition" id="nav-btn-saran">
+                <span class="text-lg">💡</span> Saran
+            </button>
+        </div>
+    </nav>
+
+    <!-- Toast Notifikasi -->
+    <div id="toast-notif" class="hidden fixed bottom-16 right-5 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl z-50 text-xs flex items-center gap-3 border border-slate-700 animate-bounce">
+        <span class="text-lg">🔔</span>
+        <div>
+            <p id="toast-title" class="font-bold">Notifikasi</p>
+            <p id="toast-desc" class="text-slate-300">Pesan...</p>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-100 py-4 text-center text-xs text-slate-500 mb-12">
+        &copy; 2026 Kawan Sinau. Buatan OSIS SMK Neka — Arofah Al Hidayah.
+    </footer>
+
+    <!-- SCRIPT FIREBASE & LOGIKA -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, 
+            onAuthStateChanged, signOut, sendPasswordResetEmail 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { 
+            getFirestore, doc, setDoc, getDoc, collection, addDoc, 
+            getDocs, updateDoc, deleteDoc, query, orderBy, where, onSnapshot, serverTimestamp 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADlNNPNsaG8EcNUw2ovHWRiTIZeW2qPA4",
+            authDomain: "kawan-sinau.firebaseapp.com",
+            projectId: "kawan-sinau",
+            storageBucket: "kawan-sinau.firebasestorage.app",
+            messagingSenderId: "67848039939",
+            appId: "1:67848039939:web:aeb153213ec6a8d98e6836",
+            measurementId: "G-B19DDXVFS7"
+        };
+
+        const ADMIN_EMAIL = "arofahalhidayah83@gmail.com";
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUserData = null;
+
+        if ("Notification" in window && Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
+
+        function showToast(title, desc) {
+            const t = document.getElementById('toast-notif');
+            document.getElementById('toast-title').textContent = title;
+            document.getElementById('toast-desc').textContent = desc;
+            t.classList.remove('hidden');
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification(title, { body: desc, icon: "https://lh3.googleusercontent.com/d/1auTnpx2x-lY0DYizjMErMUPmTcX3VZ9R=s400" });
+            }
+            setTimeout(() => t.classList.add('hidden'), 5000);
+        }
+
+        // Jam WIB Akurat di Pojok Kanan Atas
+        setInterval(() => {
+            const now = new Date();
+            const options = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            const timeString = new Intl.DateTimeFormat('id-ID', options).format(now);
+            const clockEl = document.getElementById('realtime-clock');
+            if (clockEl) clockEl.textContent = timeString + " WIB";
+        }, 1000);
+
+        const daftarKelas = [
+            "X TO 1", "X TO 2", "X TO 3", "X TO 4", "X TO 5", "X TO 6", "X TO 7",
+            "X TKL 1", "X TKL 2", "X TKL 3", "X AKL 1", "X AKL 2", "X AKL 3", "X AKL 4",
+            "X PM 1", "X PM 2", "X PM 3", "XI TKR 1", "XI TKR 2", "XI TKR 3", "XI TKR 4", 
+            "XI TKR 5", "XI TSM 1", "XI TSM 2", "XI TITL 1", "XI TITL 2", "XI TITL 3", 
+            "XI BD", "XI BR 1", "XI BR 2", "XII TKR 1", "XII TKR 2", "XII TKR 3", 
+            "XII TKR 4", "XII TKR 5", "XII TSM 1", "XII TSM 2", "XII TITL 1", "XII TITL 2", 
+            "XII TITL 3", "XII BD", "XII BR 1", "XII BR 2"
+        ];
+        const selectKelas = document.getElementById('reg-siswa-kelas');
+        if (selectKelas) {
+            daftarKelas.forEach(kls => {
+                const opt = document.createElement('option');
+                opt.value = kls;
+                opt.textContent = kls;
+                selectKelas.appendChild(opt);
+            });
+        }
+
+        window.togglePasswordVisibility = (fieldId, btn) => {
+            const input = document.getElementById(fieldId);
+            if (input.type === "password") { input.type = "text"; btn.textContent = "🙈"; } 
+            else { input.type = "password"; btn.textContent = "👁️"; }
+        };
+
+        window.switchAuthView = (view) => {
+            document.getElementById('auth-alert').classList.add('hidden');
+            ['form-login', 'form-register-siswa', 'form-register-pengajar', 'form-forgot'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            const title = document.getElementById('auth-title');
+            const sub = document.getElementById('auth-subtitle');
+            if (view === 'login') { document.getElementById('form-login').classList.remove('hidden'); title.textContent = "Selamat Datang 👋"; sub.textContent = "Masuk untuk mengakses ruang kelas Kawan Sinau"; }
+            else if (view === 'register-siswa') { document.getElementById('form-register-siswa').classList.remove('hidden'); title.textContent = "Buat Akun Peserta"; sub.textContent = "Khusus Siswa SMKN Karangpucung"; }
+            else if (view === 'register-pengajar') { document.getElementById('form-register-pengajar').classList.remove('hidden'); title.textContent = "Daftar Pemateri / Pengajar"; sub.textContent = "Bergabung menjadi pengajar"; }
+            else if (view === 'forgot') { document.getElementById('form-forgot').classList.remove('hidden'); title.textContent = "Pemulihan Akun"; sub.textContent = "Reset kata sandi"; }
+        };
+
+        function showAuthAlert(msg, isError = true) {
+            const box = document.getElementById('auth-alert');
+            box.textContent = msg;
+            box.className = `mb-4 p-3 rounded-xl text-xs font-medium ${isError ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-green-50 text-green-700 border border-green-200'}`;
+            box.classList.remove('hidden');
+        }
+
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const namaInput = document.getElementById('login-nama').value.trim();
+            const passInput = document.getElementById('login-password').value;
+            try {
+                const q = query(collection(db, "users"), where("nama", "==", namaInput));
+                const querySnap = await getDocs(q);
+                if (querySnap.empty) { showAuthAlert("Nama lengkap tidak ditemukan."); return; }
+                let userEmail = "";
+                querySnap.forEach(docSnap => { userEmail = docSnap.data().email; });
+                await signInWithEmailAndPassword(auth, userEmail, passInput);
+            } catch (err) { showAuthAlert("Login gagal: Periksa kembali nama atau kata sandi."); }
+        });
+
+        document.getElementById('form-register-siswa').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                const emailVal = document.getElementById('reg-siswa-email').value;
+                const cred = await createUserWithEmailAndPassword(auth, emailVal, document.getElementById('reg-siswa-password').value);
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    uid: cred.user.uid, nama: document.getElementById('reg-siswa-nama').value, kelas: document.getElementById('reg-siswa-kelas').value,
+                    sekolah: document.getElementById('reg-siswa-sekolah').value, email: emailVal,
+                    role: "peserta", status: "approved", dibuat_pada: serverTimestamp(), lastActive: serverTimestamp()
+                });
+                alert("Pendaftaran berhasil! Silakan login menggunakan Nama Lengkap.");
+                switchAuthView('login');
+            } catch (err) { showAuthAlert("Gagal mendaftar: " + err.message); }
+        });
+
+        document.getElementById('form-register-pengajar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('reg-guru-email').value;
+            try {
+                const cred = await createUserWithEmailAndPassword(auth, email, document.getElementById('reg-guru-password').value);
+                const isMainAdmin = (email.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+                await setDoc(doc(db, "users", cred.user.uid), {
+                    uid: cred.user.uid, nama: document.getElementById('reg-guru-nama').value, bidang: document.getElementById('reg-guru-bidang').value,
+                    kemampuan: document.getElementById('reg-guru-kemampuan').value, email: email, role: "pengajar", status: isMainAdmin ? "approved" : "pending",
+                    dibuat_pada: serverTimestamp(), lastActive: serverTimestamp()
+                });
+                alert("Pengajuan akun pengajar berhasil dikirim.");
+                switchAuthView('login');
+            } catch (err) { showAuthAlert("Gagal mengajukan akun: " + err.message); }
+        });
+
+        document.getElementById('form-forgot').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try { await sendPasswordResetEmail(auth, document.getElementById('forgot-email').value); showAuthAlert("Link reset sandi telah dikirim!", false); } 
+            catch (err) { showAuthAlert("Gagal mengirim link: Pastikan email benar."); }
+        });
+
+        window.logoutUser = async () => {
+            if (auth.currentUser) { await updateDoc(doc(db, "users", auth.currentUser.uid), { lastActive: new Date(0) }).catch(() => {}); }
+            signOut(auth);
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            const loader = document.getElementById('loading-screen');
+            const authBox = document.getElementById('auth-container');
+            const pendingBox = document.getElementById('pending-container');
+            const appBox = document.getElementById('app-container');
+            const bottomNavbar = document.getElementById('bottom-navbar');
+
+            if (!user) {
+                currentUserData = null;
+                authBox.classList.remove('hidden'); pendingBox.classList.add('hidden'); appBox.classList.add('hidden'); bottomNavbar.classList.add('hidden'); loader.classList.add('hidden');
+                return;
+            }
+
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            if (userDoc.exists()) { currentUserData = userDoc.data(); } 
+            else { currentUserData = { uid: user.uid, nama: "Arofah Al Hidayah", email: user.email, role: user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? "pengajar" : "peserta", status: "approved", kelas: "Admin Utama" }; }
+
+            await updateDoc(doc(db, "users", user.uid), { lastActive: serverTimestamp() }).catch(() => {});
+
+            if (currentUserData.role === "pengajar" && currentUserData.status !== "approved") {
+                document.getElementById('pending-nama').textContent = currentUserData.nama;
+                authBox.classList.add('hidden'); appBox.classList.add('hidden'); pendingBox.classList.remove('hidden'); bottomNavbar.classList.add('hidden'); loader.classList.add('hidden');
+                return;
+            }
+
+            authBox.classList.add('hidden'); pendingBox.classList.add('hidden'); appBox.classList.remove('hidden');
+            bottomNavbar.classList.remove('hidden'); // Ikon Beranda, Tanya, Forum, Saran muncul setelah login
+
+            document.getElementById('banner-welcome-name').textContent = `Selamat Datang, ${currentUserData.nama.toUpperCase()}! 🎓`;
+
+            if (currentUserData.role === "pengajar") {
+                document.getElementById('user-role-badge').textContent = "Pengajar / Pemateri";
+                document.getElementById('user-role-badge').className = "text-[10px] font-semibold px-2 py-0.5 rounded bg-indigo-50 text-indigo-600";
+                document.getElementById('view-peserta').classList.add('hidden');
+                document.getElementById('view-pengajar').classList.remove('hidden');
+                bottomNavbar.classList.add('hidden'); // Navbar bawah khusus peserta, pengajar memakai tab atas
+
+                if (user.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                    document.getElementById('admin-approval-section').classList.remove('hidden');
+                    muatPendingPengajar();
+                }
+                muatDataPengajar();
+            } else {
+                document.getElementById('user-role-badge').textContent = `Peserta • ${currentUserData.kelas}`;
+                document.getElementById('view-pengajar').classList.add('hidden');
+                document.getElementById('view-peserta').classList.remove('hidden');
+                muatDataPeserta();
+            }
+
+            loader.classList.add('hidden');
+        });
+
+        window.switchTab = (role, tabName) => {
+            const prefix = role === 'peserta' ? 'p' : 'g';
+            const tabs = role === 'peserta' ? ['modul', 'tanya', 'forum', 'saran'] : ['buat', 'modul', 'siswa', 'tanya', 'forum', 'saran'];
+            tabs.forEach(t => {
+                const contentEl = document.getElementById(`content-${prefix}-${t}`);
+                if (contentEl) { contentEl.classList.add('hidden'); }
+            });
+            const activeContent = document.getElementById(`content-${prefix}-${tabName}`);
+            if (activeContent) { activeContent.classList.remove('hidden'); }
+        };
+
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800;
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = img.width > MAX_WIDTH ? MAX_WIDTH : img.width;
+                        canvas.height = img.width > MAX_WIDTH ? img.height * scaleSize : img.height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+            });
+        }
+
+        document.getElementById('form-buat-materi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-submit-materi');
+            btn.disabled = true; btn.textContent = "Menyimpan...";
+
+            const judul = document.getElementById('materi-judul').value;
+            const deskripsi = document.getElementById('materi-deskripsi').value;
+            const isi = document.getElementById('materi-isi').value;
+            const link = document.getElementById('materi-link').value;
+            const fileGambar = document.getElementById('materi-gambar').files[0];
+
+            let gambarBase64 = "";
+            if (fileGambar) { gambarBase64 = await compressImage(fileGambar); }
+
+            try {
+                await addDoc(collection(db, "materi"), {
+                    judul, deskripsi, isi, link, gambar: gambarBase64,
+                    pengajar: currentUserData.nama, bidang: currentUserData.bidang || "Umum", dibuat_pada: serverTimestamp()
+                });
+                showToast("Materi Berhasil Dipublikasikan!", `Modul "${judul}" siap dipelajari peserta.`);
+                e.target.reset();
+                switchTab('pengajar', 'modul');
+            } catch (err) { alert("Gagal menyimpan materi: " + err.message); }
+            finally { btn.disabled = false; btn.textContent = "Publikasikan Materi →"; }
+        });
+
+        // Ruang Baca Materi Full-Screen (Referensi Gambar 2 & 3)
+        window.bukaModalBaca = (judul, pengajar, isi, gambar, link) => {
+            document.getElementById('modal-judul').textContent = judul;
+            document.getElementById('modal-pengajar-sub').textContent = `Pengampu: ${pengajar}`;
+            document.getElementById('modal-isi').textContent = isi;
+            const imgEl = document.getElementById('modal-gambar');
+            if (gambar) { imgEl.src = gambar; imgEl.classList.remove('hidden'); } else { imgEl.classList.add('hidden'); }
+            const linkBox = document.getElementById('modal-link-box');
+            if (link) { document.getElementById('modal-link').href = link; linkBox.classList.remove('hidden'); } else { linkBox.classList.add('hidden'); }
+            document.getElementById('modal-baca').classList.remove('hidden');
+        };
+        window.tutupModalBaca = () => document.getElementById('modal-baca').classList.add('hidden');
+
+        function muatDataPeserta() {
+            onSnapshot(query(collection(db, "materi"), orderBy("dibuat_pada", "desc")), (snap) => {
+                const container = document.getElementById('list-modul-peserta');
+                document.getElementById('total-modul-badge').textContent = `${snap.size} Modul`;
+                if (snap.empty) { container.innerHTML = `<p class="text-sm text-slate-400">Belum ada modul materi tersedia.</p>`; return; }
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between hover:shadow-md transition";
+                    card.innerHTML = `
+                        <div>
+                            <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-2.5 py-1 rounded-lg">${d.bidang}</span>
+                            <h4 class="font-bold text-slate-900 mt-2 text-base leading-snug">${d.judul}</h4>
+                            <p class="text-xs text-slate-500 mt-1">Pengampu: ${d.pengajar}</p>
+                            <p class="text-xs text-slate-600 mt-2 line-clamp-2">${d.deskripsi}</p>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center gap-2">
+                            <button class="btn-baca flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl transition shadow-sm">📖 Baca Modul Full</button>
+                            ${d.link ? `<a href="${d.link}" target="_blank" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition">🔗 Link</a>` : ''}
+                        </div>
+                    `;
+                    card.querySelector('.btn-baca').onclick = () => bukaModalBaca(d.judul, d.pengajar, d.isi, d.gambar, d.link);
+                    container.appendChild(card);
+                });
+            });
+
+            onSnapshot(query(collection(db, "diskusi"), orderBy("waktu", "desc")), (snap) => {
+                const container = document.getElementById('list-tanya-peserta');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    if (d.balasan && !d._notified) {
+                        showToast("Pertanyaan Dijawab!", `Pengajar ${d.pembalas} telah membalas pertanyaan Anda.`);
+                        d._notified = true;
+                    }
+                    container.innerHTML += `
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 text-sm shadow-sm">
+                            <p class="text-xs font-bold text-slate-800 mb-1">${d.penanya} (${d.kelas})</p>
+                            <p class="text-slate-700">${d.pertanyaan}</p>
+                            ${d.balasan ? `
+                                <div class="mt-3 bg-blue-50 p-3 rounded-xl border-l-4 border-blue-500">
+                                    <p class="text-xs font-bold text-blue-800">Balasan Pengajar (${d.pembalas}):</p>
+                                    <p class="text-xs text-slate-700 mt-1">${d.balasan}</p>
+                                </div>
+                            ` : `<p class="text-[11px] text-amber-600 mt-2 italic">Menunggu balasan pengajar...</p>`}
+                        </div>
+                    `;
+                });
+            });
+
+            onSnapshot(query(collection(db, "forum"), orderBy("waktu", "asc")), (snap) => {
+                const container = document.getElementById('list-forum-chat');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const f = docSnap.data();
+                    container.innerHTML += `
+                        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 text-sm flex gap-3 shadow-sm">
+                            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                                ${f.pengirim.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-bold text-xs text-slate-900">${f.pengirim} <span class="font-normal text-slate-500">(${f.kelas || 'Pengajar'})</span></span>
+                                <p class="text-slate-700 text-xs mt-0.5">${f.pesan}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+        }
+
+        document.getElementById('form-tanya-peserta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "diskusi"), {
+                penanya: currentUserData.nama, kelas: currentUserData.kelas,
+                pertanyaan: document.getElementById('input-pertanyaan').value,
+                balasan: "", pembalas: "", waktu: serverTimestamp()
+            });
+            e.target.reset();
+            alert("Pertanyaan berhasil dikirim!");
+        });
+
+        document.getElementById('form-forum-chat').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "forum"), {
+                pengirim: currentUserData.nama, kelas: currentUserData.kelas,
+                pesan: document.getElementById('input-forum-pesan').value, waktu: serverTimestamp()
+            });
+            document.getElementById('input-forum-pesan').value = "";
+        });
+
+        document.getElementById('form-saran-peserta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "saran"), {
+                pengirim: currentUserData.nama, kelas: currentUserData.kelas,
+                isi: document.getElementById('input-saran').value, waktu: serverTimestamp()
+            });
+            alert("Saran Anda telah terkirim!");
+            e.target.reset();
+        });
+
+        function muatPendingPengajar() {
+            onSnapshot(query(collection(db, "users"), where("role", "==", "pengajar"), where("status", "==", "pending")), (snap) => {
+                const container = document.getElementById('list-pending-pengajar');
+                if (snap.empty) { container.innerHTML = `<p class="text-xs text-amber-700">Tidak ada permintaan baru.</p>`; return; }
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const row = document.createElement('div');
+                    row.className = "bg-white p-3 rounded-xl border border-amber-200 flex justify-between items-center gap-3";
+                    row.innerHTML = `
+                        <div><p class="font-bold text-sm">${d.nama} (${d.bidang})</p><p class="text-xs text-slate-600">${d.kemampuan}</p></div>
+                        <div class="flex gap-2">
+                            <button class="btn-acc bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg">Setujui</button>
+                            <button class="btn-tolak bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-lg">Tolak</button>
+                        </div>
+                    `;
+                    row.querySelector('.btn-acc').onclick = () => updateDoc(doc(db, "users", d.uid), { status: "approved" });
+                    row.querySelector('.btn-tolak').onclick = () => deleteDoc(doc(db, "users", d.uid));
+                    container.appendChild(row);
+                });
+            });
+        }
+
+        function muatDataPengajar() {
+            onSnapshot(query(collection(db, "materi"), orderBy("dibuat_pada", "desc")), (snap) => {
+                const container = document.getElementById('list-modul-pengajar');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const card = document.createElement('div');
+                    card.className = "bg-white p-4 rounded-2xl border border-slate-200 flex flex-col justify-between shadow-sm";
+                    card.innerHTML = `
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-sm">${d.judul}</h4>
+                            <p class="text-xs text-slate-500 mt-1">Oleh: ${d.pengajar}</p>
+                            <p class="text-xs text-slate-600 mt-2 line-clamp-2">${d.deskripsi}</p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t flex justify-between">
+                            <button class="btn-lihat text-xs text-blue-600 font-semibold hover:underline">Pratinjau Full</button>
+                            <button class="btn-hapus text-xs text-red-600 font-semibold hover:underline">Hapus</button>
+                        </div>
+                    `;
+                    card.querySelector('.btn-lihat').onclick = () => bukaModalBaca(d.judul, d.pengajar, d.isi, d.gambar, d.link);
+                    card.querySelector('.btn-hapus').onclick = () => { if (confirm("Hapus materi ini?")) deleteDoc(doc(db, "materi", docSnap.id)); };
+                    container.appendChild(card);
+                });
+            });
+
+            onSnapshot(query(collection(db, "users"), where("role", "==", "peserta")), (snap) => {
+                document.getElementById('total-siswa-badge').textContent = `${snap.size} Siswa`;
+                const tbody = document.getElementById('table-siswa-body');
+                tbody.innerHTML = '';
+                const now = Date.now();
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    let isOnline = false;
+                    if (d.lastActive && d.lastActive.toMillis) { isOnline = (now - d.lastActive.toMillis()) < 60000; }
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-4 py-2.5 font-medium text-slate-800">${d.nama}</td>
+                        <td class="px-4 py-2.5 text-slate-600">${d.kelas}</td>
+                        <td class="px-4 py-2.5">
+                            ${isOnline ? '<span class="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-bold rounded-full">● Online</span>' : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 text-xs rounded-full">○ Offline</span>'}
+                        </td>
+                        <td class="px-4 py-2.5">
+                            <button class="btn-reset bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm">Kirim Reset Sandi</button>
+                        </td>
+                    `;
+                    tr.querySelector('.btn-reset').onclick = async () => {
+                        if (confirm(`Kirim email tautan reset sandi ke ${d.nama} (${d.email})?`)) {
+                            try { await sendPasswordResetEmail(auth, d.email); alert(`Link reset sandi terkirim ke ${d.email}!`); } 
+                            catch (err) { alert("Gagal: " + err.message); }
+                        }
+                    };
+                    tbody.appendChild(tr);
+                });
+            });
+
+            onSnapshot(query(collection(db, "diskusi"), orderBy("waktu", "desc")), (snap) => {
+                const container = document.getElementById('list-tanya-pengajar');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const box = document.createElement('div');
+                    box.className = "bg-white p-4 rounded-2xl border border-slate-200 text-sm relative shadow-sm";
+                    box.innerHTML = `
+                        <button class="btn-hapus-tanya absolute top-4 right-4 text-xs text-red-500 hover:underline font-semibold">Hapus</button>
+                        <p class="text-xs font-bold text-slate-800">${d.penanya} <span class="font-normal text-slate-500">(${d.kelas})</span></p>
+                        <p class="text-slate-700 mt-1 pr-12">${d.pertanyaan}</p>
+                        ${d.balasan ? `<div class="mt-3 bg-slate-50 p-2.5 rounded-xl text-xs text-slate-700"><strong>Balasan:</strong> ${d.balasan}</div>` : ''}
+                        <form class="form-balas mt-3 flex gap-2">
+                            <input type="text" required value="${d.balasan || ''}" class="flex-1 px-3 py-1.5 border border-slate-300 rounded-xl text-xs outline-none bg-slate-50" placeholder="Tulis balasan...">
+                            <button type="submit" class="bg-blue-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold">Balas</button>
+                        </form>
+                    `;
+                    box.querySelector('.btn-hapus-tanya').onclick = () => { if (confirm("Hapus pertanyaan?")) deleteDoc(doc(db, "diskusi", docSnap.id)); };
+                    box.querySelector('.form-balas').onsubmit = async (ev) => {
+                        ev.preventDefault();
+                        await updateDoc(doc(db, "diskusi", docSnap.id), { balasan: ev.target.querySelector('input').value, pembalas: currentUserData.nama });
+                        alert("Balasan terkirim!");
+                    };
+                    container.appendChild(box);
+                });
+            });
+
+            onSnapshot(query(collection(db, "forum"), orderBy("waktu", "asc")), (snap) => {
+                const container = document.getElementById('list-forum-chat-guru');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const f = docSnap.data();
+                    container.innerHTML += `
+                        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 text-sm flex gap-3 shadow-sm">
+                            <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center text-xs flex-shrink-0">
+                                ${f.pengirim.charAt(0).toUpperCase()}
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-bold text-xs text-slate-900">${f.pengirim} <span class="font-normal text-slate-500">(${f.kelas || 'Pengajar'})</span></span>
+                                <p class="text-slate-700 text-xs mt-0.5">${f.pesan}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+
+            onSnapshot(query(collection(db, "saran"), orderBy("waktu", "desc")), (snap) => {
+                const container = document.getElementById('list-saran-pengajar');
+                container.innerHTML = '';
+                snap.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const box = document.createElement('div');
+                    box.className = "bg-white p-4 rounded-2xl border border-slate-200 text-sm relative shadow-sm";
+                    box.innerHTML = `
+                        <button class="btn-hapus-saran absolute top-4 right-4 text-xs text-red-500 hover:underline font-semibold">Hapus</button>
+                        <p class="text-xs font-bold text-slate-800">${d.pengirim} <span class="font-normal text-slate-500">(${d.kelas})</span></p>
+                        <p class="text-slate-700 mt-1 pr-12">${d.isi}</p>
+                    `;
+                    box.querySelector('.btn-hapus-saran').onclick = () => { if (confirm("Hapus saran?")) deleteDoc(doc(db, "saran", docSnap.id)); };
+                    container.appendChild(box);
+                });
+            });
+        }
+
+        document.getElementById('form-forum-chat-guru').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, "forum"), {
+                pengirim: currentUserData.nama, kelas: "Pengajar",
+                pesan: document.getElementById('input-forum-pesan-guru').value, waktu: serverTimestamp()
+            });
+            document.getElementById('input-forum-pesan-guru').value = "";
+        });
+    </script>
+</body>
+</html>
